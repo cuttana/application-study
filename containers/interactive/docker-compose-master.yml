@@ -29,16 +29,16 @@ volumes:
     driver_opts:
       type: "none"
       o: "bind"
-      device: "/home/apacaci/sgp-framework/streaming-graph-partitioning/datasets"
+      device: "/home/miladrzh/milad/sync/datasets"
   results:
     driver: local
     driver_opts:
       type: "none"
       o: "bind"
-      device: "/home/apacaci/sgp-framework/streaming-graph-partitioning/results/janusgraph-results"
+      device: "/home/miladrzh/milad/sync/results"
   parameters:
     driver: local
     driver_opts:
       type: "none"
       o: "bind"
-      device: "/home/apacaci/sgp-framework/streaming-graph-partitioning/containers/interactive/parameters"
+      device: "/home/miladrzh/milad/sync/params"

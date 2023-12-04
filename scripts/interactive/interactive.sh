@@ -8,18 +8,22 @@ NETWORK_NAME="janusgraph-network"
 JANUSGRAPH_IMAGE_TAG="127.0.0.1:5000/janusgraph"
 
 JANUSGRAPH_IMAGE_FILE="../../containers/interactive"
-SERVICE_COMPOSE_FILE="../../containers/interactive/docker-compose-4nodes.yml"
 MASTER_COMPOSE_FILE="../../containers/interactive/docker-compose-master.yml"
 
 SWARM_MANAGER_IP="192.168.152.201"
-
-DOCKER_WORKER_NODES="/home/apacaci/docker_machines"
-
 
 # include conf file if it is defined
 if [ -f ./interactive.conf ]; then
     . interactive.conf
 fi
+
+JG_WORKER_COUNT=8
+SERVICE_COMPOSE_FILE="../../containers/interactive/docker-compose-${JG_WORKER_COUNT}nodes.yml"
+ALL_NODES="/home/miladrzh/docker_machines"
+DOCKER_WORKER_NODES="/home/miladrzh/docker_machines${JG_WORKER_COUNT}"
+
+
+
 
 # set variables
 
@@ -113,13 +117,13 @@ destroy_swarm()
 {
     printf "\\n\\n===> DESTROY SWARM\\n"
 
-    echo "$ pdsh -w ^${DOCKER_WORKER_NODES} -R ssh \"docker swarm leave\""
+    echo "$ pdsh -w ^${ALL_NODES} -R ssh \"docker swarm leave\""
     printf "\\n"
-    pdsh -w ^${DOCKER_WORKER_NODES} -R ssh "docker swarm leave"
+    pdsh -w ^${ALL_NODES} -R ssh "docker swarm leave"
 
-    echo "$ pdsh -w ^${DOCKER_WORKER_NODES} -R ssh \"docker system prune --force --volumes \""
+    echo "$ pdsh -w ^${ALL_NODES} -R ssh \"docker system prune --force --volumes \""
     printf "\\n"
-    pdsh -w ^${DOCKER_WORKER_NODES} -R ssh "docker system prune --force --volumes"
+    pdsh -w ^${ALL_NODES} -R ssh "docker system prune --force --volumes"
 
 	  printf "\\n\\n===> MASTER NODE LEAVE\\n"
 	  echo "$ docker swarm leave -f"
@@ -140,7 +144,7 @@ start_service()
 	docker stack deploy -c ${SERVICE_COMPOSE_FILE} ${PROJECT_NAME}
 
 	# sleep before checking cluster status
-	sleep 5;
+	sleep 50;
 	
 	while [ $(get_cluster_size) -lt ${JG_WORKER_COUNT} ]
 	do

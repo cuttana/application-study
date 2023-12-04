@@ -1,4 +1,3 @@
-# based on official Ubuntu 16.04 release
 FROM ubuntu:16.04
 
 USER root
@@ -11,14 +10,15 @@ WORKDIR /sgp
 # # ------------------------------------------------------------
 
 # install necessary dependencies for powergraph
-RUN apt-get update &&\
-	apt-get -y install default-jdk gcc openssh-server openmpi-bin python python-pip dnsutils sudo
+RUN apt-get update
+RUN apt-get install python3 python3-pip -y
+RUN	apt -y install default-jdk gcc openssh-server openmpi-bin python python-pip dnsutils sudo
 
-# install pandas
-RUN pip install --upgrade pip &&\
-    python -m pip install pandas
+RUN pip install numpy==1.10.1
+# RUN pip3 install --upgrade pip &&\
+#     python3 -m pip3 install pandas
 
-# copy powerlyra codebase
+copy powerlyra codebase
 COPY powerlyra/ /sgp/powerlyra/
 COPY scripts/ /sgp/scripts/
 
@@ -52,6 +52,7 @@ RUN  sed -i "s/#PasswordAuthentication.*/PasswordAuthentication no/g" /etc/ssh/s
  
 # Set up user's public and private keys
 ENV SSHDIR ${USER_HOME}/.ssh
+ENV GRAPHLAB_SUBNET_MASK 255.255.255.0
 RUN mkdir -p ${SSHDIR}
 
 # Default ssh config file that skips (yes/no) question when first login to the host
@@ -71,8 +72,12 @@ COPY get_hosts /home/mpi/get_hosts
 RUN chmod +x /home/mpi/get_hosts &&\
 	chown -R ${USER}:${USER} /home/mpi/get_hosts
 
+USER mpi
+ENV GRAPHLAB_SUBNET_MASK 255.255.0.0
+
+USER root
+
 # # Start SSH Server 
 RUN sudo mkdir /var/run/sshd
 EXPOSE 22
 CMD ["/usr/sbin/sshd", "-D"]
-

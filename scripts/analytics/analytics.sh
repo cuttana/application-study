@@ -13,9 +13,9 @@ IMAGE_TAG="127.0.0.1:5000/powerlyra"
 IMAGE_FILE="../../containers/analytics"
 SERVICE_COMPOSE_FILE="../../containers/analytics/docker-compose.yml"
 
-SWARM_MANAGER_IP="192.168.152.51"
+SWARM_MANAGER_IP="10.34.15.8"
 
-DOCKER_WORKER_NODES="/home/apacaci/docker_machines"
+DOCKER_WORKER_NODES="/home/miladrzh/docker_machines"
 
 
 # include conf file if it is defined

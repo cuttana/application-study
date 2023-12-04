@@ -68,52 +68,30 @@ def read_tput(result_dir):
         return int(tput)
 
 
-# run LDBC driver to execute specified workload
-def run(graph_name, ingress, nworkers, dataset_location):
-    print("Running experiments for graph: {}, ingress: {} and partitions: {}".format(graph_name, ingress, str(nworkers)))
+def run_onehop(graph_name, ingress, nworkers, dataset_location, onehop_count):
 
-    #onehop experiments
     print('Warm up for onehop workload run will be executed')
     onehop_previous_counts = cassandra_read_counter(nworkers)
     result_dir = result_directory(graph_name, ingress, nworkers, WORKLOAD.ONE_HOP, LOAD.MEDIUM_LOAD)
-    subprocess.call(['/sgp/scripts/run-driver.sh', str(nworkers), str(nworkers * THREADS_PER_WORKER_MEDIUM), dataset_location, 'onehop', result_dir])
+    subprocess.call(['/sgp/scripts/run-driver.sh', str(nworkers), str(nworkers * THREADS_PER_WORKER_MEDIUM), dataset_location, 'onehop', result_dir, str(onehop_count)])
     onehop_current_counts = cassandra_read_counter(nworkers)
     onehop_load = compute_load(onehop_previous_counts, onehop_current_counts)
-
     # now take measurement runs
     # onehop calls, medium and
     print('Medium load for onehop workload run will be executed')
     result_dir = result_directory(graph_name, ingress, nworkers, WORKLOAD.ONE_HOP, LOAD.MEDIUM_LOAD)
-    subprocess.call(['/sgp/scripts/run-driver.sh', str(nworkers), str(nworkers * THREADS_PER_WORKER_MEDIUM), dataset_location, 'onehop', result_dir])
+    subprocess.call(['/sgp/scripts/run-driver.sh', str(nworkers), str(nworkers * THREADS_PER_WORKER_MEDIUM), dataset_location, 'onehop', result_dir, str(onehop_count)])
     onehop_medium_tput = read_tput(result_dir)
     print('High load for onehop workload run will be executed')
     result_dir = result_directory(graph_name, ingress, nworkers, WORKLOAD.ONE_HOP, LOAD.HIGH_LOAD)
-    subprocess.call(['/sgp/scripts/run-driver.sh', str(nworkers), str(nworkers * THREADS_PER_WORKER_HIGH), dataset_location, 'onehop', result_dir])
+    subprocess.call(['/sgp/scripts/run-driver.sh', str(nworkers), str(nworkers * THREADS_PER_WORKER_HIGH), dataset_location, 'onehop', result_dir, str(onehop_count)])
     onehop_high_tput = read_tput(result_dir)
-
-    #onehop experiments
-    print('Warm up for twohop workload run will be executed')
-    twohop_previous_counts = cassandra_read_counter(nworkers)
-    result_dir = result_directory(graph_name, ingress, nworkers, WORKLOAD.TWO_HOP, LOAD.MEDIUM_LOAD)
-    subprocess.call(['/sgp/scripts/run-driver.sh', str(nworkers), str(nworkers * THREADS_PER_WORKER_MEDIUM), dataset_location, 'twohop', result_dir])
-    twohop_current_counts = cassandra_read_counter(nworkers)
-    twohop_load = compute_load(twohop_previous_counts, twohop_current_counts)
-
-    # now take measurement runs
-    # twohop calls, medium and
-    print('Medium load for twohop workload run will be executed')
-    result_dir = result_directory(graph_name, ingress, nworkers, WORKLOAD.TWO_HOP, LOAD.MEDIUM_LOAD)
-    subprocess.call(['/sgp/scripts/run-driver.sh', str(nworkers), str(nworkers * THREADS_PER_WORKER_MEDIUM), dataset_location, 'twohop', result_dir])
-    twohop_medium_tput = read_tput(result_dir)
-    print('High load for twohop workload run will be executed')
-    result_dir = result_directory(graph_name, ingress, nworkers, WORKLOAD.TWO_HOP, LOAD.HIGH_LOAD)
-    subprocess.call(['/sgp/scripts/run-driver.sh', str(nworkers), str(nworkers * THREADS_PER_WORKER_HIGH), dataset_location, 'twohop', result_dir])
-    twohop_high_tput = read_tput(result_dir)
-
-    # now parse and write results
+    
+        # now parse and write results
     output_csv_file = os.path.join(result_volume, 'aggregated.csv')
     file_exists = os.path.isfile(output_csv_file)
     fieldnames = ['graph', 'ingress', 'partition', 'workload', 'tput_medium', 'tput_high', 'li_max', 'li_min', 'li_25', 'li_50', 'li_75']
+    
     with open(output_csv_file, 'a') as csv_file:
         writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
         if not file_exists:
@@ -133,6 +111,33 @@ def run(graph_name, ingress, nworkers, dataset_location):
             'li_75' : numpy.percentile(onehop_load, 75)
         })
 
+def run_twohop(graph_name, ingress, nworkers, dataset_location, twohop_count):
+    print('Warm up for twohop workload run will be executed')
+    twohop_previous_counts = cassandra_read_counter(nworkers)
+    result_dir = result_directory(graph_name, ingress, nworkers, WORKLOAD.TWO_HOP, LOAD.MEDIUM_LOAD)
+    subprocess.call(['/sgp/scripts/run-driver.sh', str(nworkers), str(nworkers * THREADS_PER_WORKER_MEDIUM), dataset_location, 'twohop', result_dir, str(twohop_count)])
+    twohop_current_counts = cassandra_read_counter(nworkers)
+    twohop_load = compute_load(twohop_previous_counts, twohop_current_counts)
+    # now take measurement runs
+    # twohop calls, medium and
+    print('Medium load for twohop workload run will be executed')
+    result_dir = result_directory(graph_name, ingress, nworkers, WORKLOAD.TWO_HOP, LOAD.MEDIUM_LOAD)
+    subprocess.call(['/sgp/scripts/run-driver.sh', str(nworkers), str(nworkers * THREADS_PER_WORKER_MEDIUM), dataset_location, 'twohop', result_dir, str(twohop_count)])
+    twohop_medium_tput = read_tput(result_dir)
+    print('High load for twohop workload run will be executed')
+    result_dir = result_directory(graph_name, ingress, nworkers, WORKLOAD.TWO_HOP, LOAD.HIGH_LOAD)
+    subprocess.call(['/sgp/scripts/run-driver.sh', str(nworkers), str(nworkers * THREADS_PER_WORKER_HIGH), dataset_location, 'twohop', result_dir, str(twohop_count)])
+    twohop_high_tput = read_tput(result_dir)
+    
+        # now parse and write results
+    output_csv_file = os.path.join(result_volume, 'aggregated.csv')
+    file_exists = os.path.isfile(output_csv_file)
+    fieldnames = ['graph', 'ingress', 'partition', 'workload', 'tput_medium', 'tput_high', 'li_max', 'li_min', 'li_25', 'li_50', 'li_75']
+    
+    with open(output_csv_file, 'a') as csv_file:
+        writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
+        if not file_exists:
+            writer.writeheader()
         # now generate the new row for twohop workload
         writer.writerow({
             'graph' : graph_name,
@@ -147,4 +152,16 @@ def run(graph_name, ingress, nworkers, dataset_location):
             'li_50' : numpy.percentile(twohop_load, 50),
             'li_75' : numpy.percentile(twohop_load, 75)
         })
+
+# run LDBC driver to execute specified workload
+def run(graph_name, ingress, nworkers, dataset_location, onehop_count, twohop_count):
+    print("Running experiments for graph: {}, ingress: {} and partitions: {}".format(graph_name, ingress, str(nworkers)))
+
+    #onehop experiments
+    if onehop_count > 0:
+        run_onehop(graph_name, ingress, nworkers, dataset_location, onehop_count)
+
+    if twohop_count > 0:
+        run_twohop(graph_name, ingress, nworkers, dataset_location, twohop_count)
+        
 

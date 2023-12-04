@@ -17,14 +17,14 @@ ENV JANUSGRAPH_HOME=/sgp/janusgraph
 # # ------------------------------------------------------------
 
 RUN apt-get update &&\
-	apt-get -y install default-jdk openssh-server python python3-pip dnsutils vim sudo memcached gnuplot
+	apt-get -y install default-jdk openssh-server python python3-pip dnsutils vim sudo memcached gnuplot python-pip
 
-RUN update-alternatives --install /usr/bin/python python /usr/bin/python3 10 &&\ 
-  pip3 install --upgrade pip &&\
-  python -m pip install pandas &&\
-  python -m pip install numpy &&\
-  python -m pip install jmxquery &&\
-  python -m pip install jproperties
+RUN update-alternatives --install /usr/bin/python python /usr/bin/python3 10 
+# RUN  pip3 install --upgrade pip 
+# RUN  python -m pip install pandas==0.7
+RUN  pip3 install numpy==1.10.1 
+RUN  python -m pip install jmxquery 
+RUN  python -m pip install jproperties
   
 COPY janusgraph.tar.gz /sgp/
 RUN tar -xzvf /sgp/janusgraph.tar.gz

@@ -13,7 +13,7 @@ result_volume = "/sgp/results/"
 parameters_volume = "/sgp/parameters/"
 
 
-edge_cut_sgp = ["random_ec", "ldg", "fennel", "metis"]
+edge_cut_sgp = ["random_ec", "ldg_vertex", "fennel_vertex", "metis", "cuttana", "fennel", "ldg", "hei"]
 vertex_cut_sgp = ["random", "dbh", "grid", "hdrf", "hybrid", "hybrid_ginger"]
 
 natural_algorithms = ["pagerank", "sssp"]
@@ -35,28 +35,27 @@ class PowerLyraRun:
 	iterations		= -1
 	engine			= "plsync"
 	log_file		= ""
+	thread_count  = -1
 
-	def __init__(self, machines, cpu_per_node, graph_nodes, graph_edges, algorithm, ingress):
+	def __init__(self, machines, cpu_per_node, graph_nodes, graph_edges, algorithm, ingress, thread_count):
 		self.machines = machines
 		self.cpu_per_node = cpu_per_node
 		self.graph_nodes = graph_nodes
 		self.graph_edges = graph_edges
 		self.algorithm = algorithm["name"]
+		self.thread_count = thread_count
 		# graph format and engine is based on the cut model of the algorithm
 		if ingress["name"] in edge_cut_sgp:
 			self.graph_format = "adj_ec"
-			if algorithm["name"] in natural_algorithms:
-				self.engine = "plsyncec"
-			else:
-				self.engine = "plsync"
+			self.engine = "plsyncec"
 		if ingress["name"] in vertex_cut_sgp:
 			self.graph_format = "snap"
 			self.engine = "plsync"
 		
 		self.ingress = ingress["name"]
 
-		if self.ingress == "metis":
-			self.lookup = ingress["lookup"][str(machines)]
+		if self.ingress == "metis" or self.ingress == "cuttana" or self.ingress == 'hei':
+			self.lookup = os.path.join(dataset_volume, ingress["lookup"][str(machines)])
 
 		if "source" in algorithm:	
 			self.source = algorithm["source"]
@@ -74,10 +73,10 @@ class PowerLyraRun:
 		command += "-hostfile /home/mpi/machines "
 		command += "/sgp/powerlyra/{} ".format(self.algorithm)
 		# following command control the number of cpus per instance, it uses all cores for threading by default
-		#command += "--ncpus {} ".format(str(self.cpu_per_node))
+		command += "--ncpus {} ".format(str(self.thread_count))
 		# metis needs special parameters to set lookup file
-		if self.ingress == "metis":
-			command += "--graph_opts ingress={},nedges={},nverts={},lookup={} ".format(self.ingress, str(self.graph_edges), str(self.graph_nodes), self.lookup)
+		if self.ingress == "metis" or self.ingress == "cuttana" or self.ingress == "hei":
+			command += "--graph_opts ingress={},nedges={},nverts={},lookup={} ".format("metis", str(self.graph_edges), str(self.graph_nodes), self.lookup)
 		else:
 			command += "--graph_opts ingress={},nedges={},nverts={} ".format(self.ingress, str(self.graph_edges), str(self.graph_nodes))
 
@@ -125,6 +124,8 @@ with open(parameters_file, 'rb') as parameters_handle:
 	run_config = parameters_json["runs"]
 	
 	## read global parameters from the json file
+ 
+	thread_count = run_config['thread-count']
 	dataset_name = run_config["dataset-name"]
 	snap_dataset = os.path.join(dataset_volume, run_config["snap-dataset"])
 	adj_dataset  = os.path.join(dataset_volume, run_config["adj-dataset"])
@@ -146,7 +147,7 @@ with open(parameters_file, 'rb') as parameters_handle:
 	for worker in workers_list:
 		for ingress in ingress_list:
 			for algorithm in algorithm_list:
-				run_list.append(PowerLyraRun(worker, pernode, nverts, nedges, algorithm, ingress))
+				run_list.append(PowerLyraRun(worker, pernode, nverts, nedges, algorithm, ingress, thread_count))
 
 	# run each command one by one
 	for run in run_list:

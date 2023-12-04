@@ -234,11 +234,10 @@ class ADJParser {
 
                             } else if (elementType == ElementType.PROPERTY) {
                                 GraphTraversalSource g = graph.traversal();
-
                                 Vertex vertex = null;
                                 Long id = idMapping.get(colVals[0]);
                                 vertex = g.V(id).next()
-
+                                
                                 for (int j = 1; j < colVals.length; ++j) {
                                     vertex.property(VertexProperty.Cardinality.list, colNames[j],
                                             colVals[j]);
@@ -337,6 +336,7 @@ class ADJParser {
 
                                     if(id2 == null) {
                                         vertex2 = addVertex(identifier2)
+                                        System.out.println("Possibly an invalid dataset file.")
 										Long id = (Long) vertex2.id()
                                 		idMapping.put(identifier2, id)
                                     } else {
@@ -408,7 +408,8 @@ class ADJParser {
         createIndexes(graph)
 
         Configuration configuration = new PropertiesConfiguration(configurationFile);
-
+        System.out.println("CreateIndex finished is complete!");
+        System.out.println("");
         //import partition lookup
         int numberOfVertices = partitionLookupImport(configuration)
 
@@ -436,9 +437,11 @@ class ADJParser {
         if(isGraphSNB) {
             nodeFile = FileUtils.getFile( inputBaseDir, "social_network","person_0_0.csv")
             edgeFile = FileUtils.getFile( inputBaseDir, "social_network", "person_knows_person_0_0.csv")
+            System.out.println("Graph is SNB");
         } else {
             nodeFile = FileUtils.getFile( inputBaseDir, "adj.txt")
             edgeFile = FileUtils.getFile( inputBaseDir, "adj.txt")
+            System.out.println("Graph is not SNB");
         }
 
         //check validity of graph file
@@ -472,6 +475,7 @@ class ADJParser {
             executor.invokeAll(tasks)
             graphReader.stop()
 
+            System.out.println("Ingesting Vertices finished!");
 
             graphReader = new SharedGraphReader(Paths.get(edgeFile.getAbsolutePath()), batchSize, progReportPeriod, isGraphSNB)
             tasks = new ArrayList<ADJGraphLoader>()
@@ -509,6 +513,8 @@ class ADJParser {
         String[] servers = configuration.getStringArray("memcached.address")
         int batchSize = configuration.getInt("batch.size")
         int threadCount = configuration.getInt("thread.count")
+        System.out.println("Threadcount: " + threadCount);
+        System.out.println("BatchSize: " + batchSize);
 
         AtomicInteger counter = new AtomicInteger(0)
 
@@ -544,7 +550,7 @@ class ADJParser {
                             }
 
 
-                            if (counter.incrementAndGet() % batchSize == 0) {
+                            if (counter.incrementAndGet() % 50000 == 0) {
                                 System.out.println("Imported: " + counter.get())
                             }
                         }
@@ -681,6 +687,7 @@ class ADJParser {
 
 System.out.println("Populate partitioning info using configuration: " + args[0]);
 janusGraph = JanusGraphFactory.open('/sgp/scripts/conf/janusgraph-cassandra-es-server.properties')
+System.out.println("Factory is complete!");
 ADJParser.loadGraph(janusGraph, args[0]);
 System.out.println("Partitioning info is complete!");
 System.exit(0);

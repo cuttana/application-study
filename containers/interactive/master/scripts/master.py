@@ -52,10 +52,14 @@ def run_experiment(parameter_file):
     graph_name = config.properties['graph.name']
     ingress = config.properties['partition.ingress']
     nworkers = int(config.properties['partition.count'])
+    
+    onehop_count = int(config.properties['onehop.count'])
+    twohop_count = int(config.properties['twohop.count'])
+    
     dataset_location = os.path.join(dataset_volume, config.properties['input.base'])
-
+    
     # call run to complete al runs on this configuration
-    run(graph_name, ingress, nworkers, dataset_location)
+    run(graph_name, ingress, nworkers, dataset_location, onehop_count, twohop_count)
 
 
 if COMMAND == 'load':
