@@ -5,7 +5,7 @@ URL_PREFIX="${REPO_HOME}""/download?path=%2F&files="
 
 TWITTER_ARCHIVE="twitter_compressed.tar.gz"
 UK2007_ARCHIVE="uk2007_compressed.tar.gz"
-USROAD_ARHIVE="usroad_compressed.tar.gz"
+USROAD_ARCHIVE="usroad_compressed.tar.gz"
 LDBC_ARCHIVE="sf1000_friendship_adjacency.tar.gz"
 
 echo "Downloading twitter"
